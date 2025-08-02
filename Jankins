@@ -1,0 +1,231 @@
+Jankins:
+
+Its a ci/cd tool
+
+Ci :  Continous integration : Continous build + Continous test old code with new code
+
+Before ci we have time waste and every thing is manual work.
+After ci everything is automated
+
+cd : Continous Deliery : Deployment Manually to production Enviornment.
+cd : Continous Deployment: Deployment Automatically to production Enviornment.
+
+PIPELINE: Step by Step Execution of A perticular process.
+
+-Series of Events Interlinked with eachother.
+
+Code --> Build -> test -> Code quality ->Deployment
+
+Enviornment:
+Dev                  : Devlopers
+QA                   : Testers
+UAT                  : CLIENT
+The Above envs are called as pre-prod on Non-prod
+
+PROD                 : User
+PROD ENV is also called as live envs.
+
+
+Jenkins :
+Its a free and opensource tool.
+Its platform independent.
+it is buit on java-11.
+koshuke kawaguchui invented jenkins in sun micro systems 2004.
+ 
+inital name was hudson -->paid-->orcle-->free
+
+It consist log of plugins.
+PORT N0 is 8080
+
+SETUP:
+
+#Step 1; Installing git java maven
+-yum install git java-openjdk maven -y
+
+#step 2: Getting the Repo (jenkins.io --> download --> redhat)
+sudo wget -O /etc/yum.repos.d/jenkins.repo \ https://pkg.jenkins.io/redhat-stable/jenkins.repo
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+
+#step 3 - download java11 and Jenkins
+-yum install jenkins -y
+-sudo dnf install java-17-amazon-corretto -y
+-update-alternatives --config java
+
+#step4 :-Restrating Jenkins (When we download service it will on stopped state)
+-systemctl start jenkins.service
+-systemctl status jenkins.service
+
+
+
+or make script as following
+
+#! /bin/bash
+sudo apt update -y
+sudo apt install -y openjdk-17-jdk
+java -version
+curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | sudo tee \
+  /usr/share/keyrings/jenkins-keyring.asc > /dev/null
+
+echo deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] \
+  https://pkg.jenkins.io/debian-stable binary/ | sudo tee \
+  /etc/apt/sources.list.d/jenkins.list > /dev/null
+sudo apt update -y
+sudo apt install -y jenkins
+sudo systemctl start jenkins
+sudo systemctl status jenkins
+
+
+#!/bin/bash
+
+# Exit immediately if a command fails
+set -e
+
+echo "----- Updating system packages -----"
+sudo yum update -y
+
+echo "----- Installing Java 17 -----"
+sudo yum install java-17-amazon-corretto -y
+
+echo "----- Adding Jenkins repository -----"
+sudo wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+sudo rpm --import https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+
+echo "----- Installing Jenkins -----"
+sudo yum install jenkins -y
+
+echo "----- Enabling and starting Jenkins service -----"
+sudo systemctl enable jenkins
+sudo systemctl start jenkins
+
+echo "----- Checking Jenkins service status -----"
+sudo systemctl status jenkins --no-pager
+
+echo "----- Jenkins installation completed -----"
+echo "Access Jenkins at: http://<your-server-public-ip>:8080"
+
+echo "----- Initial Admin Password -----"
+sudo cat /var/lib/jenkins/secrets/initialAdminPassword
+
+ 
+copy public ip and paste on browser like this
+ec2 public ip :8080
+
+cat /var/lib/jenkins/secrets/initalAdminPassword
+
+install plugins and create user for login
+
+
+New ITEM--> Name:NETFLX JOB --> FREE STYLE --> Ok
+Source code Management --> GIt--> git huthub link 
+Build steps -->add setp --> Execut shell --> save
+
+------------------------------------------------------------------
+Parameters : Used to pass input for the jobs.
+choice: When we have multiple optins we can select one.
+
+create a ci job -> Configuration --> This projject is prameterized --. 
+choice --> name : env choice : dev test uat prod --> save
+
+String : to pass multiple inputs 
+
+MultiLine String : to pass on multiple lines
+
+Boolean : true or false
+File    : To Build Files
+
+How to Change the Jenkins Port No:
+cmd : vim /usr/lib/systemd/system/jenkins.service
+go to line 67  and the Change from 8080 to 8090(ur choice).
+
+then : systemctl daemon-reload:systemctl daemon-reload reloads the systemd manager configuration, which includes rereading all unit files and recreating the dependency tree. 
+after this : systemctl restart jenkins.service
+
+Passwordless login
+:vim /var/lib/jenkins/config.xml
+line 7(true=false)
+systemctl restart jenkins.service
+
+Changing Build Limits
+Dashboard --> Manage jenkins --> nodes --> built in node-->
+Configuration --> number of executors --> 3 --> save
+
+Note : When we stop and start server your ip will change and 
+the service inside service also stop.
+
+Restoring Deleted Jobs:
+Dashboard-> Manage Jenkins --> plugins --> available plugins -->
+job configuration  history --> install --> go back to top page
+now try to delete a job
+
+
+Cronjob : Used to scedule the works on jenkins.
+
+cron syntax is used to work with cron jobs.
+cron syntax : * * * * *
+each star will have space in b/w
+
+Note : Server time zone
+
+*  : minutes
+*  : hours
+*  : date
+*  : month
+*  : day (0=sun 1=mon)
+
+11:06 08-09-2003
+
+6 11 8 9 5
+
+ 
+Create a Ci Job : Build Triggers --> Build Periodically --> * * * * * --> save
+
+Limitations : 
+Will not check the code is changed or not.
+
+
+Pollscm : it will build whe code is changed only.
+This is used when we want to build after Devlopers pushed tyhe code for regualr interval
+
+Create a Ci job : build Triggers --> Pollscm --> * * * * * --> save
+
+Note : need to set the time Limit
+
+Limitations : time waste 
+like build is set to 9am but developer pushed at 7 am 2hours of time waste
+
+
+Webhooks : It will trigger the build the moment we commit the code
+
+github --> repo --> settings --> webhooks --> add webhook --> Payload Url : JenkinsUrl (http://13.09.12.187:8080/github-webhook/)  ->contetn tuype : application/json --> Add Webhooks
+
+Jenkins Dashboard --> Create ci Job --> Build triggers --> Github Hook Triggers for GitScm polling -> save
+
+
+Throttle Build : to restrict number of builds per interval. 
+
+Create a Job --> Throttle builds --> Number of Build : 3 --> time period : hours --> save
+
+make builds and test them
+
+ Remote Triggering:
+
+Create Job --> build triggers --> Trigger builds remotely --> Authentication Token : Raham --> save
+
+copy the url and change values and build it
+
+
+--------------------------------------------------------------
+Jenkins Master And Slave
+
+It is used to distribute the builds
+It reduce the load on jenkins server.
+Communication b/w master and slave is ssh.
+Here we need to install agent(java-11)
+slave can use any platform
+label - way of assingning work for slave.
+
+
+
+
+
+
